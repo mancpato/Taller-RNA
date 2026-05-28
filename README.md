@@ -9,14 +9,13 @@ Baja California Sur (UABCS).
 
 TalleRNA permite explorar cómo los hiperparámetros afectan el entrenamiento
 de múltiples redes neuronales simultáneamente. El usuario configura un rango
-de valores para cada hiperparámetro, lanza un enjambre de modelos y observa
-en tiempo real cómo evolucionan las fronteras de decisión, la pérdida y el
-rendimiento de cada modelo.
+de valores para cada hiperparámetro, lanza varios modelos y observa en tiempo 
+real cómo evolucionan las fronteras de decisión, la pérdida y el rendimiento 
+de cada modelo.
 
 ## Uso
 
 Abrir `index.html` directamente en el navegador.
-No requiere instalación ni servidor local.
 Solo depende de p5.js (cargado vía CDN).
 
 ## Interfaz
@@ -35,7 +34,9 @@ Solo depende de p5.js (cargado vía CDN).
 - **Inicialización**: ✅ operativo
 - **Tasa de aprendizaje**: ✅ operativo
 - **Momentum**: ✅ operativo
-- **Dropout**: 🚧 pendiente
+- **Experimentos**:  pendiente
+
+
 
 ## Problemas disponibles
 
