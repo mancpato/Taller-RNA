@@ -41,13 +41,11 @@ function generarEnjambreInit() {
     (semillaDatos * 6271 + 1) % 99991,
     (semillaDatos * 7919 + 1) % 99991
   ];
-  console.log('[generarEnjambre] semillaDatos=', semillaDatos,
-    'SEMILLAS_INIT calculado=', SEMILLAS_INIT);
   _actualizarDisplaySemillas();
 
   for (const dist of distActivas) {
     for (let s = 1; s <= semillasPorDist; s++) {
-      const m   = crearModelo([2, 4, 1], 'relu', 0.05, 0, SEMILLAS_INIT[s - 1], dist);
+      const m   = crearModelo([esTipoClasif ? 2 : 1, 4, 1], 'relu', 0.05, 0, SEMILLAS_INIT[s - 1], dist);
       const hex  = COLORES_INIT[dist];
       const alfa = OPACIDADES_INIT[s - 1];
       m.color    = color(
@@ -57,8 +55,7 @@ function generarEnjambreInit() {
         alfa
       );
       m.etiqueta = `${dist}·${'ABC'[s - 1]}`;
-      const grid = calcularGridPrediccion(m, 50);
-      m.frontera = calcularFrontera(grid, 50);
+      m.frontera = calcularFronteraModelo(m);
       modelos.push(m);
     }
   }
@@ -68,8 +65,6 @@ function generarEnjambreInit() {
     modeloMapa = modelos[0];
     renderizarMapa(modelos[0]);
   }
-  console.log('[Enjambre Init] modelos:', modelos.length,
-    modelos.map(m => m.etiqueta));
 }
 
 // ── 3. CONTROLES PANEL 3 (DOM) ────────────────────────────────────────────────
@@ -290,11 +285,14 @@ function dibujarCirculosInit(r3) {
 
       if (m.historial && m.historial.length > 0) {
         const ult = m.historial[m.historial.length - 1];
-        if (ult.accuracy_test !== undefined && ult.accuracy_test !== null) {
+        noStroke(); textSize(10); textAlign(CENTER, BOTTOM);
+        if (esTipoClasif && ult.accuracy_test !== undefined && ult.accuracy_test !== null) {
           const acc = ult.accuracy_test;
           fill(acc > 0.75 ? color(46, 180, 90) : acc > 0.50 ? color(200, 160, 0) : color(160));
-          noStroke(); textSize(10); textAlign(CENTER, BOTTOM);
           text((acc * 100).toFixed(0) + '%', cx, cirY - DIAM / 2 - 2);
+        } else if (!esTipoClasif && ult.J_test !== undefined) {
+          fill(120);
+          text(ult.J_test.toFixed(4), cx, cirY - DIAM / 2 - 2);
         }
       }
 
@@ -302,5 +300,12 @@ function dibujarCirculosInit(r3) {
       text('s' + (s + 1), cx, cirY + DIAM / 2 + 5);
     }
     gx += anchoGrupo + SEP_G;
+  }
+
+  // Etiqueta "J=" fija a la izquierda de la fila de valores, solo en regresión
+  if (!esTipoClasif && modelos.some(m => m.historial && m.historial.length > 0)) {
+    const _x0 = r3.x + (r3.w - anchoTotal) / 2;
+    noStroke(); fill(100); textSize(12); textAlign(RIGHT, BOTTOM);
+    text('J =', _x0 - DIAM / 2 - 18, cirY - DIAM / 2 - 2);
   }
 }

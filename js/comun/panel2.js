@@ -96,7 +96,10 @@ function dibujarHistorialPanel2() {
           i * (Math.log10(Math.max(yMax, 1e-8)) - Math.log10(Math.max(yMin, 1e-8))) / 5)
       : yMin + (yMax - yMin) * i / 5;
     const ty   = _valToY(val, plot, yMin, yMax);
+    // El piso 1e-8 usado en log(0) no debe aparecer como etiqueta visible
+    const esPisoLog = modoLogPanel2 && i === 0 && yMin < 1e-7;
     const etiq = modoAccPanel2 ? (val * 100).toFixed(0) + '%'
+               : (val === 0 || esPisoLog) ? '0'
                : val < 0.01 ? val.toExponential(1) : val.toFixed(3);
     text(etiq, plot.x - 3, ty);
   }

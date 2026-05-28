@@ -6,7 +6,6 @@
 
 function transicionar(nuevoEstado) {
   if (nuevoEstado !== estado) {
-    console.log(`[Estado] ${estado} → ${nuevoEstado}`);
     estado = nuevoEstado;
   }
 }
@@ -16,7 +15,6 @@ function enEstado(...estados) {
 }
 
 function iniciarEntrenamiento() {
-  console.log('[Transición] iniciarEntrenamiento()');
   if (modelos && modelos.length > 0) {
     const vals = modelos.map(m =>
       m.historial && m.historial.length > 0 ? m.historial[0].J_train : 1.0);
@@ -38,25 +36,21 @@ function iniciarEntrenamiento() {
 }
 
 function detener() {
-  console.log('[Transición] detener()');
   transicionar('PAUSED');
   actualizarUIEstado();
 }
 
 function continuar() {
-  console.log('[Transición] continuar()');
   transicionar('RUNNING');
   actualizarUIEstado();
 }
 
 function converger() {
-  console.log('[Transición] converger()');
   transicionar('CONVERGED');
   actualizarUIEstado();
 }
 
 function reiniciar() {
-  console.log('[Transición] reiniciar()');
   transicionar('IDLE');
   actualizarUIEstado();
   modeloReferencia         = null;
@@ -66,7 +60,6 @@ function reiniciar() {
 }
 
 function resetear() {
-  console.log('[Transición] resetear()');
   transicionar('IDLE');
   actualizarUIEstado();
   modeloReferencia         = null;
@@ -93,7 +86,6 @@ function avanzar100() {
 
 function notificar(texto) {
   notificacion = { texto, frameInicio: frameCount, duracion: 120 };
-  console.log(`[Notificación] ${texto}`);
 }
 
 // ── Control del enjambre ─────────────────────────────────────────────────────
@@ -114,20 +106,17 @@ function stepModelo(m) {
 
   const { diverge } = verificarDivergencia(m, J_ant);
   if (diverge) {
-    const grid = calcularGridPrediccion(m, 50);
-    m.frontera = calcularFrontera(grid, 50);
+    m.frontera = calcularFronteraModelo(m);
     m.estado = 'divergente';
     return;
   }
   if (m.historial.length >= maximoEpocas) {
-    const grid = calcularGridPrediccion(m, 50);
-    m.frontera = calcularFrontera(grid, 50);
+    m.frontera = calcularFronteraModelo(m);
     m.estado = 'no_convergido';
     return;
   }
   if (verificarConvergencia(m)) {
-    const grid = calcularGridPrediccion(m, 50);
-    m.frontera = calcularFrontera(grid, 50);
+    m.frontera = calcularFronteraModelo(m);
     m.estado = 'convergido';
     m.epocaFinal = m.historial.length;
   }
@@ -138,7 +127,6 @@ function initEnjambre() {
   else if (moduloActivo === 'init')       generarEnjambreInit();
   else if (moduloActivo === 'activacion') generarEnjambreActivacion();
   else if (moduloActivo === 'momentum')   generarEnjambreMomentum();
-  else if (moduloActivo === 'dropout')    generarEnjambreDropout();
   else if (moduloActivo === 'topologia')  generarEnjambreTopologia();
 }
 
@@ -149,7 +137,6 @@ function dibujarControlesPanel3() {
   else if (moduloActivo === 'init')       dibujarCirculosInit(r3);
   else if (moduloActivo === 'activacion') dibujarCirculosActivacion(r3);
   else if (moduloActivo === 'momentum')   dibujarCirculosMomentum(r3);
-  else if (moduloActivo === 'dropout')    dibujarCirculosDropout(r3);
   else if (moduloActivo === 'topologia')  dibujarCirculosTopologia(r3);
 }
 
@@ -185,14 +172,13 @@ function crearOverlayPanel3() {
   crearSeccionOverlayInit();
   crearSeccionOverlayActivacion();
   crearSeccionOverlayMomentum();
-  crearSeccionOverlayDropout();
   crearSeccionOverlayTopologia();
 
   posicionarOverlayPanel3();
 }
 
 function actualizarModuloOverlay() {
-  ['topologia', 'activacion', 'init', 'eta', 'momentum', 'dropout'].forEach(mod => {
+  ['topologia', 'activacion', 'init', 'eta', 'momentum'].forEach(mod => {
     const div = document.getElementById(`controles-${mod}`);
     if (div) div.style.display = moduloActivo === mod ? 'block' : 'none';
   });
@@ -234,6 +220,5 @@ function actualizarUIEstado() {
   actualizarUIEstadoInit();
   actualizarUIEstadoActivacion();
   actualizarUIEstadoMomentum();
-  actualizarUIEstadoDropout();
   actualizarUIEstadoTopologia();
 }

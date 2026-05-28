@@ -44,7 +44,6 @@ function setup() {
   const _fwdReg = forward(_mReg, [[0.5]], false);
   const _salReg = _fwdReg.activaciones[_fwdReg.activaciones.length - 1][0][0];
   esTipoClasif = _prevClasif;
-  console.log('[Bug#1 fix] Salida regresión:', _salReg);
 
   const _mDrop = crearModelo([2, 4, 1], 'relu', 0.05, 0.5, 99, 'xavier');
   const _f1 = forward(_mDrop, [[0.1, 0.2]], true);
@@ -53,9 +52,6 @@ function setup() {
   const _m1 = Array.from(_f1.mascarasDropout[1][0]);
   const _m2 = Array.from(_f2.mascarasDropout[1][0]);
   const _distintas = _m1.some((v, i) => v !== _m2[i]);
-  console.log('[Bug#2 fix] Máscaras dropout distintas:', _distintas);
-
-  console.log('Setup completado. Estado: IDLE');
 }
 
 function draw() {
@@ -113,8 +109,7 @@ function draw() {
     if (activosIdx.length > 0) {
       fronteraUpdateIdx = fronteraUpdateIdx % activosIdx.length;
       const { m: mActualizar } = activosIdx[fronteraUpdateIdx];
-      const grid = calcularGridPrediccion(mActualizar, 50);
-      mActualizar.frontera = calcularFrontera(grid, 50);
+      mActualizar.frontera = calcularFronteraModelo(mActualizar);
       fronteraUpdateIdx++;
     }
 

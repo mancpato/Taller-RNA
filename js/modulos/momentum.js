@@ -38,7 +38,7 @@ function generarEnjambreMomentum()
 {
   const betas = calcularBetasSecuencia(betaMinMom);
   modelos = betas.map((b) => {
-    let m = crearModelo([2, 4, 1], 'relu', 0.05, 0, 1, 'xavier', b);
+    let m = crearModelo([esTipoClasif ? 2 : 1, 4, 1], 'relu', 0.05, 0, 1, 'xavier', b);
     m.etiqueta = `β=${b.toFixed(1)}`;
     const t = b / BETA_MAX_MOM;
     m.color = lerpColor(PALETAS.momentum.azulClaro, PALETAS.momentum.naranjaOscuro, t);
@@ -193,12 +193,18 @@ function dibujarCirculosMomentum(r3)
         text((acc * 100).toFixed(0) + '%', cx, cirY - DIAM / 2 - 3);
       } else if (ult.J_test !== undefined) {
         fill(120);
-        text('J=' + ult.J_test.toFixed(3), cx, cirY - DIAM / 2 - 3);
+        text(ult.J_test.toFixed(4), cx, cirY - DIAM / 2 - 3);
       }
     }
 
     // Etiqueta debajo
     noStroke(); fill(70); textSize(11); textAlign(CENTER, TOP);
     text(m.etiqueta || `β=${i}`, cx, cirY + DIAM / 2 + 5);
+  }
+
+  // Etiqueta "J=" fija a la izquierda de la fila de valores, solo en regresión
+  if (!esTipoClasif && modelos.some(m => m.historial && m.historial.length > 0)) {
+    noStroke(); fill(100); textSize(12); textAlign(RIGHT, BOTTOM);
+    text('J =', cirX0 - DIAM / 2 - 18, cirY - DIAM / 2 - 2);
   }
 }

@@ -30,6 +30,67 @@ function panel1ToData(px, py) {
   };
 }
 
+// ── Utilidades de regresión ───────────────────────────────────────────────────
+
+function _rangoRegresion() {
+  const todos = [...datosTrain, ...datosTest];
+  if (todos.length === 0) return { yMin: -1.2, yMax: 1.2 };
+  let yMin = Infinity, yMax = -Infinity;
+  for (const d of todos) {
+    if (d.y < yMin) yMin = d.y;
+    if (d.y > yMax) yMax = d.y;
+  }
+  const margen = (yMax - yMin) * 0.12 || 0.1;
+  return { yMin: yMin - margen, yMax: yMax + margen };
+}
+
+function calcularCurvaRegresion(modelo, n) {
+  const batch = [];
+  for (let i = 0; i < n; i++) batch.push([-1 + (i / (n - 1)) * 2]);
+  const fwd = forward(modelo, batch, false);
+  const salida = fwd.activaciones[fwd.activaciones.length - 1];
+  return batch.map((b, i) => ({ x1: b[0], yhat: salida[i][0] }));
+}
+
+function renderizarMapaRegresion(modelo) {
+  const p = _panel1PlotArea();
+  const gfx = createGraphics(Math.floor(p.w), Math.floor(p.h));
+  gfx.clear();
+  gfx.noStroke();
+
+  const n = 50;
+  const batch = [];
+  for (let j = 0; j < n; j++) batch.push([-1 + (j / (n - 1)) * 2]);
+  const fwd = forward(modelo, batch, false);
+  const ychats = fwd.activaciones[fwd.activaciones.length - 1].map(a => a[0]);
+
+  const yhatMin = Math.min(...ychats);
+  const yhatMax = Math.max(...ychats);
+  const yhatRange = yhatMax - yhatMin || 1;
+
+  const cellW = p.w / n;
+  for (let j = 0; j < n; j++) {
+    const t = (ychats[j] - yhatMin) / yhatRange;
+    gfx.fill(
+      Math.round(75  + t * 157),
+      Math.round(139 - t * 9),
+      Math.round(190 - t * 100),
+      55
+    );
+    gfx.rect(j * cellW, 0, cellW + 1, Math.floor(p.h));
+  }
+  return gfx;
+}
+
+// Función unificada para calcular frontera (clasif.) o curva (regresión)
+function calcularFronteraModelo(m) {
+  if (esTipoClasif) {
+    const grid = calcularGridPrediccion(m, 50);
+    return calcularFrontera(grid, 50);
+  }
+  return calcularCurvaRegresion(m, 100);
+}
+
 // ── Mapa de predicción ────────────────────────────────────────────────────────
 
 function calcularGridPrediccion(modelo, resolucion) {
@@ -73,9 +134,14 @@ function renderizarMapaPrediccion(grid, resolucion) {
 }
 
 function renderizarMapa(modelo) {
-  const grid  = calcularGridPrediccion(modelo, 50);
-  gfxMapa     = renderizarMapaPrediccion(grid, 50);
-  fronteraPrueba = calcularFrontera(grid, 50);
+  if (esTipoClasif) {
+    const grid = calcularGridPrediccion(modelo, 50);
+    gfxMapa        = renderizarMapaPrediccion(grid, 50);
+    fronteraPrueba = calcularFrontera(grid, 50);
+  } else {
+    gfxMapa        = renderizarMapaRegresion(modelo);
+    fronteraPrueba = [];
+  }
 }
 
 function dibujarMapaPanel1() {
@@ -145,8 +211,45 @@ function _modeloAtenuado(i) {
   return false;
 }
 
+function _dibujarCurvasRegresion() {
+  const p = _panel1PlotArea();
+  const { yMin, yMax } = _rangoRegresion();
+  const rango = yMax - yMin || 1;
+
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.rect(p.x, p.y, p.w, p.h);
+  drawingContext.clip();
+
+  for (let i = 0; i < modelos.length; i++) {
+    const m = modelos[i];
+    if (!m.frontera || m.frontera.length === 0) continue;
+
+    let grosor, alfa;
+    if (_modeloDestacado(i))     { grosor = 3;   alfa = 255; }
+    else if (modeloHover === i)  { grosor = 2.5; alfa = 230; }
+    else if (_modeloAtenuado(i)) { grosor = 1;   alfa = 40;  }
+    else                         { grosor = 2;   alfa = 180; }
+
+    const c = m.color;
+    stroke(red(c), green(c), blue(c), alfa);
+    strokeWeight(grosor);
+    noFill();
+    beginShape();
+    for (const pt of m.frontera) {
+      const px = p.x + (pt.x1 + 1) / 2 * p.w;
+      const py = p.y + (1 - (pt.yhat - yMin) / rango) * p.h;
+      vertex(px, py);
+    }
+    endShape();
+  }
+
+  drawingContext.restore();
+}
+
 function dibujarFronterasPanel1() {
   if (!modelos || modelos.length === 0) return;
+  if (!esTipoClasif) { _dibujarCurvasRegresion(); return; }
   noFill();
   for (let i = 0; i < modelos.length; i++) {
     const m = modelos[i];
@@ -181,7 +284,95 @@ function dibujarFronterasPanel1() {
 
 // ── Datos train/test ──────────────────────────────────────────────────────────
 
+function _dibujarDatosRegresion() {
+  const p = _panel1PlotArea();
+  const { yMin, yMax } = _rangoRegresion();
+  const yRango = yMax - yMin || 1;
+
+  function xToP(x1) { return p.x + (x1 + 1) / 2 * p.w; }
+  function yToP(y)  { return p.y + (1 - (y - yMin) / yRango) * p.h; }
+
+  // Marco del área
+  noFill(); stroke(200); strokeWeight(1);
+  rect(p.x, p.y, p.w, p.h);
+
+  // Eje x en y=0 si está dentro del rango
+  const py0 = (yMin <= 0 && yMax >= 0) ? yToP(0) : p.y + p.h;
+  stroke(180); strokeWeight(1);
+  line(p.x, py0, p.x + p.w, py0);
+
+  // Eje y en x=0 (x1 normalizado = 0)
+  const px0 = xToP(0);
+  line(px0, p.y, px0, p.y + p.h);
+
+  const TICK = 4;
+
+  // Ticks eje X
+  fill(0x44, 0x44, 0x44); noStroke(); textSize(11); textAlign(CENTER, TOP);
+  for (let v = -1; v <= 1.001; v += 0.5) {
+    const vr = Math.round(v * 10) / 10;
+    const tx = xToP(vr);
+    stroke(180); strokeWeight(1);
+    line(tx, py0 - TICK, tx, py0 + TICK);
+    if (Math.abs(vr) > 0.01) {
+      noStroke(); fill(0x44, 0x44, 0x44);
+      text(vr.toFixed(1), tx, py0 + TICK + 2);
+    }
+  }
+
+  // Ticks eje Y
+  textAlign(RIGHT, CENTER);
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const val = yMin + yRango * i / nTicks;
+    const ty = yToP(val);
+    stroke(180); strokeWeight(1);
+    line(px0 - TICK, ty, px0 + TICK, ty);
+    if (i > 0 || Math.abs(val) > 1e-4) {
+      noStroke(); fill(0x44, 0x44, 0x44);
+      text(val.toFixed(2), px0 - TICK - 2, ty);
+    }
+  }
+
+  // Etiquetas de ejes
+  noStroke(); fill(0x33, 0x33, 0x33); textSize(12);
+  textAlign(LEFT, BOTTOM);
+  text('x', p.x + p.w + 8, py0 + 4);
+  textAlign(LEFT, TOP);
+  text('y', px0 + 3, p.y - 4);
+
+  // Datos train — color neutro
+  noStroke(); fill(110, 110, 110, 200);
+  for (const d of datosTrain) circle(xToP(d.x[0]), yToP(d.y), 7);
+
+  // Datos test — cruces
+  const ARM = 3;
+  stroke(110, 110, 110, 200); strokeWeight(1.5); noFill();
+  for (const d of datosTest) {
+    const px = xToP(d.x[0]);
+    const py = yToP(d.y);
+    line(px - ARM, py, px + ARM, py);
+    line(px, py - ARM, px, py + ARM);
+  }
+
+  // Leyenda
+  const lx = p.x - 6;
+  const ly = p.y + p.h - 28;
+  fill(20, 20, 20, 150); noStroke();
+  rect(lx - 4, ly - 4, 52, 34, 3);
+  noStroke(); fill(180); ellipse(lx + 5, ly + 7, 7);
+  fill(255); textSize(9); textAlign(LEFT, CENTER); noStroke();
+  text('Train', lx + 13, ly + 7);
+  stroke(0xdd, 0xdd, 0xdd); strokeWeight(1.5); noFill();
+  line(lx + 2, ly + 22, lx + 8, ly + 22);
+  line(lx + 5, ly + 19, lx + 5, ly + 25);
+  noStroke(); fill(255); textSize(9); textAlign(LEFT, CENTER);
+  text('Test', lx + 13, ly + 22);
+}
+
 function dibujarDatosPanel1() {
+  if (!esTipoClasif) { _dibujarDatosRegresion(); return; }
+
   const COLOR_CLASE = ['#4B8BBE', '#E8825A'];
   const p = _panel1PlotArea();
 

@@ -84,7 +84,7 @@ function dibujarRedPanel4() {
   const m = modeloSeleccionado !== null ? modelos[modeloSeleccionado] : null;
 
   // Determinar arquitectura a dibujar
-  const capas   = m ? m.capas : [2, 4, 1];
+  const capas   = m ? m.capas : (esTipoClasif ? [2, 4, 1] : [1, 4, 1]);
   const key     = capas.join(',');
   const layout  = LAYOUT_RED[key] ?? (() => {
     // fallback dinámico para arquitecturas no en la tabla

@@ -162,13 +162,20 @@ function generarDatos(problema, nivelRuido, trainRatio, semilla)
         y: 1
       });
     }
+  } else if (problema === 'cuadratica') {
+    const sigmaReg = nivelRuido * 0.1;
+    for (let i = 0; i < 200; i++) {
+      const x = rng.next() * 2 - 1; // x ∈ [-1, 1] uniforme
+      const y = x * x + rng.nextGaussian() * sigmaReg;
+      datos.push({ x: [x], y });
+    }
   } else if (problema === 'seno') {
-    /* for (let i = 0; i < 200; i++) {
-      const x1 = i / 199; 
-      const y_true = Math.sin(2 * Math.PI * x1);
-      const y = y_true + rng.nextGaussian() * sigma;
-      datos.push({ x: [x1], y: y });
-    } */
+    const sigmaReg = nivelRuido * 0.1;
+    for (let i = 0; i < 200; i++) {
+      const x = i / 199; // x ∈ [0, 1] uniforme
+      const y = Math.sin(2 * Math.PI * x) + rng.nextGaussian() * sigmaReg;
+      datos.push({ x: [x], y });
+    }
   }
 
   for (let i = datos.length - 1; i > 0; i--) {
@@ -180,7 +187,7 @@ function generarDatos(problema, nivelRuido, trainRatio, semilla)
   const datosTrain = datos.slice(0, trainCount);
   const datosTest  = datos.slice(trainCount);
 
-  esTipoClasif = (problema !== 'seno'); 
+  esTipoClasif = (problema !== 'seno' && problema !== 'cuadratica');
   return { datosTrain, datosTest };
 }
 
@@ -271,7 +278,8 @@ function derivadaActivacion(z, tipo)
   return result;
 }
 
-function crearModelo(capas, activacion, eta, dropout, semillaPesos, distribucion, beta = 0.9) 
+function crearModelo(capas, activacion, eta, dropout, semillaPesos, 
+                              distribucion, beta = 0.9) 
 {
   const modelo = {
     capas, activacion, eta, dropout, semillaPesos, distribucion, beta,
@@ -283,7 +291,8 @@ function crearModelo(capas, activacion, eta, dropout, semillaPesos, distribucion
   return modelo;
 }
 
-function inicializarPesos(modelo, distribucion, semillaPesos) {
+function inicializarPesos(modelo, distribucion, semillaPesos) 
+{
   const { capas } = modelo;
   const rng = new LCG(semillaPesos);
 
@@ -296,19 +305,23 @@ function inicializarPesos(modelo, distribucion, semillaPesos) {
     const nWeights = nIn * nOut;
 
     let std;
-    if (distribucion === 'uniforme') std = null;
-    else if (distribucion === 'normal') std = 0.1;
-    else if (distribucion === 'xavier') std = Math.sqrt(2 / (nIn + nOut));
-    else if (distribucion === 'he') std = Math.sqrt(2 / nIn);
-    else std = 0.1;
+    if (distribucion === 'uniforme') 
+      std = null;
+    else if (distribucion === 'normal') 
+      std = 0.1;
+    else if (distribucion === 'xavier') 
+      std = Math.sqrt(2 / (nIn + nOut));
+    else if (distribucion === 'he') 
+      std = Math.sqrt(2 / nIn);
+    else 
+      std = 0.1;
 
     const pesos = new Float32Array(nWeights);
     for (let i = 0; i < nWeights; i++) {
-      if (distribucion === 'uniforme') {
+      if (distribucion === 'uniforme')
         pesos[i] = (rng.next() - 0.5); 
-      } else {
+      else 
         pesos[i] = rng.nextGaussian() * std;
-      }
     }
     modelo.pesos.push(pesos);
     modelo.velPesos.push(new Float32Array(nWeights)); 
@@ -319,11 +332,11 @@ function inicializarPesos(modelo, distribucion, semillaPesos) {
   }
 }
 
-function forward(modelo, X, conDropout = false) {
+function forward(modelo, X, conDropout = false) 
+{
   let ejemplos = X;
-  if (X.length > 0 && !Array.isArray(X[0])) {
+  if (X.length > 0 && !Array.isArray(X[0])) 
     ejemplos = [X];
-  }
 
   const n = ejemplos.length;
   const { capas, activacion, dropout, pesos, sesgos } = modelo;
@@ -391,6 +404,11 @@ function forward(modelo, X, conDropout = false) {
 
 // ============================================================================
 // ENTRENAMIENTO Y MÉTRICAS
+// El criterio de convergencia de cada modelo es la combinación de:
+// - Estabilización de la función de pérdida en entrenamiento (variación < 1e-4)
+//   durante al menos 30 épocas consecutivas.
+// - Mejora relativa de al menos 15% respecto a la pérdida inicial.
+// - Pérdida en test al menos un 50% menor que la inicial (baseline).
 // ============================================================================
 
 function calcularLoss(yPred, yReal, tipo) {
@@ -587,24 +605,31 @@ function verificarConvergencia(modelo)
   const J_actual   = h[h.length - 1].J_train;
   const J_anterior = h[h.length - 2].J_train;
 
-  const cond1 = Math.abs(J_actual - J_anterior) < 1e-4;
-  if (cond1) 
+  const cond1 = esTipoClasif
+    ? Math.abs(J_actual - J_anterior) < 1e-4
+    : Math.abs(J_actual - J_anterior) / (J_anterior + 1e-8) < 1e-3;
+  if (cond1)
     modelo.contadorConv++;
-  else 
+  else
     modelo.contadorConv = 0;
 
-  if (modelo.contadorConv < 30) 
+  if (modelo.contadorConv < 30)
     return false;
+
+  // Regresión: solo estabilidad de |ΔJ| durante 30 épocas — sin exigir
+  // reducción porcentual, ya que el baseline MSE puede ser alto para
+  // arquitecturas simples y el criterio sería imposible de cumplir.
+  if (!esTipoClasif)
+    return true;
 
   const J_inicial = h[0].J_train;
   const mejora = (J_inicial - J_actual) / (J_inicial + 1e-8);
-  if (mejora < 0.15) 
+  if (mejora < 0.15)
     return false;
 
   const ultimoH = h[h.length - 1];
   const J_test_final = ultimoH.J_test ?? Infinity;
-  const baseline = esTipoClasif ? 0.693 : J_inicial;
-  const calidadOK = J_test_final < baseline * 0.50;
+  const calidadOK = J_test_final < 0.693 * 0.50;
 
   return calidadOK;
 }

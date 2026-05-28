@@ -63,21 +63,22 @@ function dibujarBarraGlobal() {
   fill(245, 245, 245); stroke(200); strokeWeight(1);
   rect(0, TAB_HEIGHT, windowWidth, h);
 
+  const _arqBase = esTipoClasif ? '2→4→1' : '1→4→1';
   let textoArq;
   if (moduloActivo === 'eta') {
-    textoArq = `2→4→1 · ReLU · η∈[${etaMinVal.toFixed(3)}, ${etaMaxVal.toFixed(3)}] · SGD+mom`;
+    textoArq = `${_arqBase} · ReLU · η∈[${etaMinVal.toFixed(3)}, ${etaMaxVal.toFixed(3)}] · SGD+mom`;
   } else if (moduloActivo === 'init') {
-    textoArq = '2→4→1 · ReLU · η=0.05 · SGD+mom';
+    textoArq = `${_arqBase} · ReLU · η=0.05 · SGD+mom`;
   } else if (moduloActivo === 'activacion') {
-    textoArq = '2→4→1 · η=0.05 · Xavier · SGD+mom';
+    textoArq = `${_arqBase} · η=0.05 · Xavier · SGD+mom`;
   } else if (moduloActivo === 'momentum') {
-    textoArq = '2→4→1 · ReLU · η=0.05 · Xavier · β∈{0,0.3,0.6,0.9}';
+    textoArq = `${_arqBase} · ReLU · η=0.05 · Xavier · β∈{0,0.3,0.6,0.9}`;
   } else if (moduloActivo === 'dropout') {
-    textoArq = '2→4→1 · ReLU · η=0.05 · Xavier · SGD+mom';
+    textoArq = `${_arqBase} · ReLU · η=0.05 · Xavier · SGD+mom`;
   } else if (moduloActivo === 'topologia') {
-    textoArq = 'ReLU fija · η=0.05 · Xavier · SGD+mom';
+    textoArq = (esTipoClasif ? 'ReLU fija' : 'Tanh fija') + ' · η=0.05 · Xavier · SGD+mom';
   } else {
-    textoArq = '2→4→1 · ReLU · η=0.05 · SGD+mom';
+    textoArq = `${_arqBase} · ReLU · η=0.05 · SGD+mom`;
   }
 
   fill(100); textSize(11); textAlign(RIGHT, CENTER);
@@ -151,7 +152,8 @@ function crearOverlayBarra() {
         <option value="circulos">Círculos</option>
         <option value="medialuna">Media luna</option>
         <option value="espiral">Espiral</option>
-        <option value="seno" disabled style="color:#aaa">Regresión seno (próximamente)</option>
+        <option value="cuadratica">Cuadrática (reg.)</option>
+        <option value="seno">Seno (reg.)</option>
       </select>
     </label>
     <label>Ruido: <input type="range" id="slider-ruido" min="0" max="50" step="1" value="0">
@@ -164,7 +166,7 @@ function crearOverlayBarra() {
       <input type="number" id="input-semilla-global" min="1" max="99999" step="1"
         style="width:64px;font-size:12px;text-align:center" value="${semillaDatos}">
     </label>
-    <button id="btn-semilla">⚄</button>
+    <button id="btn-semilla">🎲</button>
   `;
   document.body.appendChild(div);
 
@@ -190,8 +192,6 @@ function crearOverlayBarra() {
   });
 
   const _inputSemilla = document.getElementById('input-semilla-global');
-  console.log('[layout] input-semilla-global existe=',
-    document.getElementById('input-semilla-global'));
   _inputSemilla.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') return;
     const v = parseInt(this.value);

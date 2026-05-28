@@ -60,12 +60,11 @@ function generarEnjambreActivacion() {
   modoAccPanel2      = false;
 
   for (const act of activacionesActivas) {
-    const m    = crearModelo([2, 4, 1], act, 0.05, 0, 1, 'xavier');
+    const m    = crearModelo([esTipoClasif ? 2 : 1, 4, 1], act, 0.05, 0, 1, 'xavier');
     m.etiqueta = NOMBRES_ACT[act];
     m.color    = PALETAS.activacion[act];
 
-    const grid = calcularGridPrediccion(m, 50);
-    m.frontera = calcularFrontera(grid, 50);
+    m.frontera = calcularFronteraModelo(m);
     modelos.push(m);
   }
 
@@ -75,7 +74,6 @@ function generarEnjambreActivacion() {
     renderizarMapa(modelos[0]);
   }
 
-  console.log('[Enjambre Activación] modelos:', modelos.map(m => m.etiqueta));
 }
 
 // ── 3. CONTROLES PANEL 3 (DOM) ────────────────────────────────────────────────
@@ -130,7 +128,6 @@ function crearSeccionOverlayActivacion() {
     const d = document.createElement('div');
     d.style.cssText = 'display:flex;flex-direction:column;gap:4px;flex:1;align-self:start;margin-top:0;padding-top:0';
     grid.appendChild(d);
-    console.log(`[activacion] colDiv${n} cssText:`, d.style.cssText);
     return d;
   });
 
@@ -236,12 +233,18 @@ function dibujarCirculosActivacion(r3) {
         text((acc * 100).toFixed(0) + '%', cx, cirY - DIAM / 2 - 3);
       } else if (ult.J_test !== undefined) {
         fill(120);
-        text('J=' + ult.J_test.toFixed(3), cx, cirY - DIAM / 2 - 3);
+        text(ult.J_test.toFixed(4), cx, cirY - DIAM / 2 - 3);
       }
     }
 
     // Etiqueta debajo
     noStroke(); fill(70); textSize(10); textAlign(CENTER, TOP);
     text(m.etiqueta, cx, cirY + DIAM / 2 + 5);
+  }
+
+  // Etiqueta "J=" fija a la izquierda de la fila de valores, solo en regresión
+  if (!esTipoClasif && modelos.some(m => m.historial && m.historial.length > 0)) {
+    noStroke(); fill(100); textSize(12); textAlign(RIGHT, BOTTOM);
+    text('J =', cirX0 - DIAM / 2 - 18, cirY - DIAM / 2 - 2);
   }
 }

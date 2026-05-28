@@ -32,15 +32,17 @@ function generarEnjambreTopologia() {
   modoLogPanel2      = false;
   modoAccPanel2      = false;
 
+  const nEnt = esTipoClasif ? 2 : 1;
   const activas = TOPOLOGIAS_DEF.filter(t => topologiasActivas.includes(t.id));
   for (const topo of activas) {
-    const m    = crearModelo(topo.capas, 'relu', 0.05, 0, 1, 'xavier');
-    m.etiqueta = topo.etiqueta;
+    const capas = topo.capas.map((n, i) => i === 0 ? nEnt : n);
+    const actTopo = esTipoClasif ? 'relu' : 'tanh';
+    const m    = crearModelo(capas, actTopo, 0.05, 0, 1, 'xavier');
+    m.etiqueta = topo.id + ': ' + capas.join('→') + (topo.id === 'T3' ? ' ★' : '');
     m.color    = PALETAS.topologia[topo.id];
     m.topoId   = topo.id;
 
-    const grid = calcularGridPrediccion(m, 50);
-    m.frontera = calcularFrontera(grid, 50);
+    m.frontera = calcularFronteraModelo(m);
     modelos.push(m);
   }
 
@@ -54,7 +56,6 @@ function generarEnjambreTopologia() {
   }
 
   _actualizarContadorTopologia();
-  console.log('[Enjambre Topología] modelos:', modelos.map(m => m.etiqueta));
 }
 
 // ── 3. CONTROLES PANEL 3 (DOM) ────────────────────────────────────────────────
@@ -86,6 +87,9 @@ function crearSeccionOverlayTopologia() {
       <button id="btn-paso-topo" style="margin-left:10px">+100</button>
     </div>
     <hr class="p3-sep">
+    <div id="topo-aviso-regresion" style="display:none;font-size:11px;color:#888;margin-bottom:4px">
+      ⚠ Regresión: primera capa reducida a 1 entrada
+    </div>
     <div style="font-size:11px;color:#888;margin-bottom:4px">
       Selecciona las arquitecturas a comparar:
     </div>
@@ -162,6 +166,9 @@ function actualizarUIEstadoTopologia() {
 
   const btnPaso = document.getElementById('btn-paso-topo');
   if (btnPaso) btnPaso.disabled = bloqueadoPaso;
+
+  const aviso = document.getElementById('topo-aviso-regresion');
+  if (aviso) aviso.style.display = esTipoClasif ? 'none' : 'block';
 }
 
 // ── 4. VISUALIZACIÓN PANEL 3 (p5.js) ─────────────────────────────────────────
@@ -209,7 +216,7 @@ function dibujarCirculosTopologia(r3) {
       ellipse(cx, cirY, DIAM + 9);
     }
 
-    // Accuracy encima
+    // Métrica encima
     if (m.historial && m.historial.length > 0) {
       const ult = m.historial[m.historial.length - 1];
       noStroke(); textSize(10); textAlign(CENTER, BOTTOM);
@@ -221,12 +228,18 @@ function dibujarCirculosTopologia(r3) {
         text((acc * 100).toFixed(0) + '%', cx, cirY - DIAM / 2 - 3);
       } else if (ult.J_test !== undefined) {
         fill(120);
-        text('J=' + ult.J_test.toFixed(3), cx, cirY - DIAM / 2 - 3);
+        text(ult.J_test.toFixed(4), cx, cirY - DIAM / 2 - 3);
       }
     }
 
     // Etiqueta corta debajo (solo "T0", "T1", etc.)
     noStroke(); fill(70); textSize(10); textAlign(CENTER, TOP);
     text(m.topoId, cx, cirY + DIAM / 2 + 5);
+  }
+
+  // Etiqueta "J=" fija a la izquierda de la fila de valores, solo en regresión
+  if (!esTipoClasif && modelos.some(m => m.historial && m.historial.length > 0)) {
+    noStroke(); fill(100); textSize(12); textAlign(RIGHT, BOTTOM);
+    text('J =', cirX0 - DIAM / 2 - 18, cirY - DIAM / 2 - 2);
   }
 }
