@@ -1,6 +1,8 @@
 /**
  * TalleRNA: Taller de Redes Neuronales Artificiales
  * @file: topologia.js
+ * @author: Miguel Ángel Norzagaray Cosío
+ * @since: abril de 2026
  * @description: Módulo para comparar 8 arquitecturas fijas de red neuronal.
  * Variable: topología (T0–T7). Fijo: η=0.05, Xavier semilla=1, ReLU, sin dropout.
  */

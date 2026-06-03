@@ -77,6 +77,9 @@ function dibujarBarraGlobal() {
     textoArq = `${_arqBase} · ReLU · η=0.05 · Xavier · SGD+mom`;
   } else if (moduloActivo === 'topologia') {
     textoArq = (esTipoClasif ? 'ReLU fija' : 'Tanh fija') + ' · η=0.05 · Xavier · SGD+mom';
+  } else if (moduloActivo === 'experimento') {
+    const def = EXP_PARES_CURADOS[expConfig?.par];
+    textoArq = def ? `Experimento · ${def.label}` : 'Experimento factorial';
   } else {
     textoArq = `${_arqBase} · ReLU · η=0.05 · SGD+mom`;
   }
@@ -92,8 +95,9 @@ function dibujarPestanas() {
     { label: 'Topología',            id: 'topologia' },
     { label: 'Activación',           id: 'activacion'},
     { label: 'Inicialización',       id: 'init'      },
-    { label: 'Tasa de aprendizaje', id: 'eta'       },
-    { label: 'Momentum',             id: 'momentum'  }
+    { label: 'Tasa de aprendizaje', id: 'eta'        },
+    { label: 'Momentum',            id: 'momentum'   },
+    { label: 'Experimento',         id: 'experimento'}
   ];
 
   let x = 8;

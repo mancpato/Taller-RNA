@@ -248,6 +248,7 @@ function _dibujarCurvasRegresion() {
 }
 
 function dibujarFronterasPanel1() {
+  if (moduloActivo === 'experimento') { dibujarFronterasExperimentoPanel1(); return; }
   if (!modelos || modelos.length === 0) return;
   if (!esTipoClasif) { _dibujarCurvasRegresion(); return; }
   noFill();

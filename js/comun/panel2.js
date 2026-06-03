@@ -62,6 +62,7 @@ function _valToY(val, plot, yMin, yMax) {
 }
 
 function dibujarHistorialPanel2() {
+  if (moduloActivo === 'experimento') { dibujarCurvasExperimentoPanel2(); return; }
   const r    = panelRect(2);
   const plot = _panel2PlotArea();
 

@@ -123,16 +123,18 @@ function stepModelo(m) {
 }
 
 function initEnjambre() {
-  if      (moduloActivo === 'eta')        generarEnjambreEta(etaMinVal, etaMaxVal);
-  else if (moduloActivo === 'init')       generarEnjambreInit();
-  else if (moduloActivo === 'activacion') generarEnjambreActivacion();
-  else if (moduloActivo === 'momentum')   generarEnjambreMomentum();
-  else if (moduloActivo === 'topologia')  generarEnjambreTopologia();
+  if      (moduloActivo === 'eta')         generarEnjambreEta(etaMinVal, etaMaxVal);
+  else if (moduloActivo === 'init')        generarEnjambreInit();
+  else if (moduloActivo === 'activacion')  generarEnjambreActivacion();
+  else if (moduloActivo === 'momentum')    generarEnjambreMomentum();
+  else if (moduloActivo === 'topologia')   generarEnjambreTopologia();
+  else if (moduloActivo === 'experimento') iniciarModuloExperimento();
 }
 
 function dibujarControlesPanel3() {
-  if (!modelos || modelos.length === 0) return;
   const r3 = panelRect(3);
+  if (moduloActivo === 'experimento') { dibujarControlesExperimento(r3); return; }
+  if (!modelos || modelos.length === 0) return;
   if      (moduloActivo === 'eta')        dibujarCirculosEta(r3);
   else if (moduloActivo === 'init')       dibujarCirculosInit(r3);
   else if (moduloActivo === 'activacion') dibujarCirculosActivacion(r3);
@@ -173,15 +175,18 @@ function crearOverlayPanel3() {
   crearSeccionOverlayActivacion();
   crearSeccionOverlayMomentum();
   crearSeccionOverlayTopologia();
+  crearSeccionOverlayExperimento();
 
   posicionarOverlayPanel3();
 }
 
 function actualizarModuloOverlay() {
-  ['topologia', 'activacion', 'init', 'eta', 'momentum'].forEach(mod => {
+  ['topologia', 'activacion', 'init', 'eta', 'momentum', 'experimento'].forEach(mod => {
     const div = document.getElementById(`controles-${mod}`);
     if (div) div.style.display = moduloActivo === mod ? 'block' : 'none';
   });
+  const btnPrincipal = document.getElementById('btn-principal');
+  if (btnPrincipal) btnPrincipal.style.display = moduloActivo === 'experimento' ? 'none' : '';
   const idEpocas = {
     topologia: 'select-epocas-topo',
     activacion: 'select-epocas-act',
@@ -221,4 +226,5 @@ function actualizarUIEstado() {
   actualizarUIEstadoActivacion();
   actualizarUIEstadoMomentum();
   actualizarUIEstadoTopologia();
+  actualizarUIEstadoExperimento();
 }

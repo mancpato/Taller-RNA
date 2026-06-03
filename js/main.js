@@ -67,6 +67,11 @@ function draw() {
   dibujarControlesPanel3();
   dibujarResumenPanel4();
   dibujarRedPanel4();
+  if (moduloActivo === 'experimento') {
+    if (expEstado === 'EJECUTANDO') stepExperimento();
+    actualizarUIProgreso();
+    dibujarHeatmapPanel4();
+  }
   dibujarNotificacion();
 
   if (enEstado('RUNNING')) {

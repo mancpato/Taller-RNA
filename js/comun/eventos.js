@@ -34,7 +34,7 @@ function _handleClickPanel3Default(mx, my, r3c) {
 
 function mousePressed(event) {
   // ── Pestañas ────────────────────────────────────────────────────────────────
-  const pestanas     = ['topologia', 'activacion', 'init', 'eta', 'momentum'];
+  const pestanas     = ['topologia', 'activacion', 'init', 'eta', 'momentum', 'experimento'];
   const anchoPestana = 140;
   let xTab = 8;
   for (let i = 0; i < pestanas.length; i++) {
@@ -54,6 +54,9 @@ function mousePressed(event) {
     if (moduloActivo === 'init') handleClickPanel3Init(mouseX, mouseY, r3c);
     else                         _handleClickPanel3Default(mouseX, mouseY, r3c);
   }
+
+  // ── Panel 4: heatmap del experimento ────────────────────────────────────────
+  expHandleMousePressed(mouseX, mouseY);
 
   // ── Panel 1: click en frontera ───────────────────────────────────────────────
   const r1 = panelRect(1);
@@ -162,4 +165,5 @@ function mouseMoved() {
       modeloHover = null;
     }
   }
+  expHandleMouseMoved(mouseX, mouseY);
 }
