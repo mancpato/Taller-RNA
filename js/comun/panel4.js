@@ -26,6 +26,11 @@ let _wMaxCache     = 0.001;
 let _wMaxModeloRef = null;
 
 function dibujarResumenPanel4() {
+  if (moduloActivo !== 'experimento') {
+    if (typeof _expSelectMetrica !== 'undefined' && _expSelectMetrica) {
+      _expSelectMetrica.style.display = 'none';
+    }
+  }
   if (moduloActivo === 'experimento') return;
   if (!modelos || modelos.length === 0) return;
   const r = panelRect(4);
