@@ -36,8 +36,6 @@ Solo depende de p5.js (cargado vía CDN).
 - **Momentum**: ✅ operativo
 - **Experimentos**:  pendiente
 
-
-
 ## Problemas disponibles
 
 Lineal · XOR · Círculos · Media luna · Espiral · Seno (regresión, pendiente)
@@ -78,4 +76,4 @@ El módulo activo al cargar es Topología; el problema por defecto es Lineal.
 
 ## Autor
 
-M.A. Norzagaray Cosío — DASC/UABCS
+Prof. Miguel Ángel Norzagaray Cosío - UABCS
