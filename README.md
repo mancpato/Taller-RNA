@@ -4,7 +4,7 @@ Visualizador interactivo de múltiples de redes neuronales entrenando
 simultáneamente para uso didáctico. Desarrollado en el Departamento 
 Académico de Sistemas Computacionales (DASC), Universidad Autónoma de 
 Baja California Sur (UABCS).
-<img src="TalleRNA.png" alt="Pantalla de ejemplo" width="500">
+<img src="TalleRNA.png" alt="Pantalla de ejemplo" width="700">
 
 ## Descripción
 
