@@ -30,16 +30,16 @@ Solo depende de p5.js (cargado vía CDN).
 
 ## Módulos (pestañas)
 
-- **Topología**: ✅ operativo
-- **Activación**: ✅ operativo
-- **Inicialización**: ✅ operativo
-- **Tasa de aprendizaje**: ✅ operativo
-- **Momentum**: ✅ operativo
-- **Experimentos**:  pendiente
+- **Topología**: 8 posibles redes
+- **Activación**: 7 de las funciones comunes
+- **Inicialización**: Uniforme, Normal, Xavier y He
+- **Tasa de aprendizaje**: 8 valores, usuario indica min y max
+- **Momentum**: máximo 0.9, mínimo seleccionable
+- **Experimentos**: 4 combinaciones fijas de interés, mas otras libres
 
 ## Problemas disponibles
 
-Lineal · XOR · Círculos · Media luna · Espiral · Seno (regresión, pendiente)
+Lineal · XOR · Círculos · Media luna · Espiral · Seno (regresión)
 
 ## Arquitectura base
 
@@ -71,10 +71,11 @@ El módulo activo al cargar es Topología; el problema por defecto es Lineal.
         ├── init.js      (Módulo inicialización de pesos)
         ├── activacion.js(Módulo función de activación)
         ├── momentum.js  (Módulo momentum)
-        ├── dropout.js   (Módulo dropout)
         └── topologia.js (Módulo topología)
+        └── experimento.js (Módulo experimentos)
 ```
 
 ## Autor
 
 Prof. Miguel Ángel Norzagaray Cosío - UABCS
+Con apoyo en diseño, codificación y documentación de Claude.
